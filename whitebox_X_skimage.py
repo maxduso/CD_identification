@@ -57,9 +57,9 @@ os.chdir(data_dir)
 
 #Set path to input image
 in_file_name = "full_pa.tif"
-out_file_name = "sink_depth_rast.tif"
+out_file_name = "identified_cds.shp"
 input_path = data_dir + "tif_folder\\" + in_file_name
-output_path = data_dir + "tif_folder\\" + out_file_name
+output_path = data_dir + "shapes\\" + out_file_name
 
 
 # ## Hydrology "Depth Sink" pit delineation
@@ -68,10 +68,10 @@ output_path = data_dir + "tif_folder\\" + out_file_name
 
 # In[61]:
 
-
+intermediate_path = data_dir + "tif_folder\\" + "depth_sink_int.tif"
 sink_depth = wbt.depth_in_sink(
                         input_path,
-                        output_path,
+                        intermediate_path,
                         zero_background= True
 )
 
@@ -177,9 +177,7 @@ print(type(spatial_image))
 type(filtered_labels)
 
 
-# ## Create georeferenced raster again (From Github)
-# 
-# ### https://gist.github.com/jkatagi/a1207eee32463efd06fb57676dcf86c8?fbclid=IwAR2hi51gLAJ8GluR3hyjUawtu0V7iqLWKITzakr2pvjpTCuQKUUqFyn1ezs
+# ## Create georeferenced raster again
 
 # In[68]:
 
@@ -231,7 +229,5 @@ gdf.set_crs(input_crs, inplace = True)
 
 # In[72]:
 
-
-outShapefile = input_path = data_dir + "shapes\\" + "identified_sites.shp"
-gdf.to_file(outShapefile)
+gdf.to_file(output_path)
 

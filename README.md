@@ -16,4 +16,21 @@ Regionprops_table is then used to filter these labels based on their shape and s
 
 `properties = ['label','area','eccentricity','perimeter']`
 
-Each label and its associated parameters then get stored in a row of a dataframe 
+Each label and its associated parameters then get stored in a row of a dataframe. Rows of the datafame are filtered out based on the parameter values that are defined by the user.
+
+### Conversion to Shapefile
+In order to convert the filtered set of pits from the form of a numpy array to a shapfile, the final step is to re-apply the spatial profile of the raster extracted upon the import of the digital elevation raster. Finally rasterio is used to produce shape features from the georeferenced filtered labels. 
+
+## User Defined Variables for Script
+
+- **area_max** -> the maximum area filter for identified pits.
+- **area_min** -> the minimum area filter for identified pits.
+- **eccentricity_max** -> the minimum circularity filter for identified pits where eccentricity = 0 is a perfect circle (float 0-1).
+- **data_dir** -> the path to the dirrectoory where dems are stored and also where output will be written (string).
+- **in_file_name** -> the file name of the dem that is desired to scan for cultural depressions (string).
+- **out_file_name** -> the desired name of the shapefile output (string)
+
+## Limitations
+whitebox_X_scikit is flawed in its ability to detect depressions with touching edges. Wthin the study area it was quite common that sites of past shelters be dirrectly adjacent to one another. This causes errosionto take place more  rapidly on the berm at the point where the sites touch due to increase angle of slope on either side of the berm. As a result, the depth sink tool merges the two pits as the middle point is lower that the rest of the perimeters resulting in a figure 8 shape. Becasue the script is not parameterized to detect this shape, nor the size of two merged pits, these pits are missed.
+
+This issue was addressed by
