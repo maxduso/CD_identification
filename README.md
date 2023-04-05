@@ -1,4 +1,7 @@
 # Development of an Automated Method of Cultural Depression Identification
+Max Duso
+dusomasimiliano@gmail.com
+
 This script is the result of a project focused on automating the process of identifying historical remnant of indigenous shelters known as cultural depression. The script takes as an input a digital elevation model, and returns identified sites of cultural depressions as shapefiles.
 
 ## Workflow
@@ -33,4 +36,4 @@ In order to convert the filtered set of pits from the form of a numpy array to a
 ## Limitations
 whitebox_X_scikit is flawed in its ability to detect depressions with touching edges. Wthin the study area it was quite common that sites of past shelters be dirrectly adjacent to one another. This causes errosionto take place more  rapidly on the berm at the point where the sites touch due to increase angle of slope on either side of the berm. As a result, the depth sink tool merges the two pits as the middle point is lower that the rest of the perimeters resulting in a figure 8 shape. Becasue the script is not parameterized to detect this shape, nor the size of two merged pits, these pits are missed.
 
-This issue was addressed by
+In order to adress this issue, the imlimentation of skimage watershed tool was explored. This tool fills depressions, or as the tool would define them watersheds, but does not merge two if they should meet at a col feature in the landscape. Though this appeards in theory to be the correct method for the job, it has not proven fruitful yet as it has done a poor job of identification. This approach warrants more exploration which will continue into the future.
