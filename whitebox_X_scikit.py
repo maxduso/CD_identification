@@ -6,7 +6,7 @@
 # ## Whitebox docs: https://www.whiteboxgeo.com/manual/wbt_book/preface.html
 # ## scikit source: https://www.youtube.com/watch?v=qfUJHY3ku9k&list=PLHae9ggVvqPgyRQQOtENr6hK0m1UquGaG&index=57
 
-# In[1]:
+# In[58]:
 
 
 area_max = 300
@@ -14,7 +14,7 @@ area_min = 50
 eccentricity_max = 0.6
 
 
-# In[2]:
+# In[59]:
 
 
 from whitebox_tools import WhiteboxTools
@@ -48,7 +48,7 @@ wbt = WhiteboxTools()
 wbt.set_whitebox_dir('C:\\Users\\maxduso.stu\\Anaconda3\\pkgs\\whitebox_tools-2.2.0-py311hc37eb10_2\\Library\\bin')
 
 
-# In[3]:
+# In[60]:
 
 
 #set up working dirrectory / data folder
@@ -56,7 +56,7 @@ data_dir = 'C:\\Users\\maxduso.stu\\Desktop\\FCOR_599\\project_work\\data\\'
 os.chdir(data_dir)
 
 #Set path to input image
-in_file_name = "Clip_depth_sink.tif"
+in_file_name = "full_pa.tif"
 out_file_name = "sink_depth_rast.tif"
 input_path = data_dir + "tif_folder\\" + in_file_name
 output_path = data_dir + "tif_folder\\" + out_file_name
@@ -66,7 +66,7 @@ output_path = data_dir + "tif_folder\\" + out_file_name
 # 
 # ### Fills depressions and then uses that surface to sibtract from the original surface so pretty much just gives the depressions in the end. But could be pretty innefficient due to the need to fill depressions and then subtract the two surfaces.
 
-# In[4]:
+# In[61]:
 
 
 sink_depth = wbt.depth_in_sink(
@@ -78,25 +78,32 @@ sink_depth = wbt.depth_in_sink(
 
 # ## Ensure image type and get spatial attributes
 
-# In[5]:
+# In[62]:
 
 
-## import image
-image = cv2.imread(output_path, -1)
-spatial_image = gdal.Open(output_path)
+## import image with spatial attributes using rasterio
+spatial_image = rio.open(output_path)
 
-prj = spatial_image.GetProjection()
+# read the band of spatial image to a numpy array for processing
+image = spatial_image.read(1)
 
-srs = osr.SpatialReference(wkt=prj)
-input_crs = srs.GetAttrValue('projcs')
-input_crs
-print(type(image))
-print(type(spatial_image))
+spatial_profile = spatial_image.profile
+
+#old method of doing shit
+#image = cv2.imread(output_path, -1)
+#spatial_image = gdal.Open(output_path)
+
+#prj = spatial_image.GetProjection()
+#srs = osr.SpatialReference(wkt=prj)
+#input_crs = srs.GetAttrValue('projcs')
+#input_crs
+#print(type(image))
+print(spatial_profile['crs'])
 
 
 # ### Create Threshold and Binarize Image
 
-# In[6]:
+# In[63]:
 
 
 # Make solid black classified image, uint8 is plenty for 3 values
@@ -108,7 +115,7 @@ classified[image>0.001] = 127
 
 # ## Create the Segments
 
-# In[7]:
+# In[64]:
 
 
 #label segments
@@ -118,7 +125,7 @@ labels = measure.label(classified, connectivity = image.ndim)
 
 # ## Filter labels
 
-# In[8]:
+# In[65]:
 
 
 #specify the properties that I want to gather
@@ -136,7 +143,7 @@ seg_props = pd.DataFrame(props)
 seg_props['area_m'] = seg_props['area'] / 3.3  #each pixel is about 0.3m x 0.3m so to get meters multiply by this factor
 
 
-# In[9]:
+# In[66]:
 
 
 #print(seg_props.columns)
@@ -155,12 +162,12 @@ filtered_seg_inds = filtered_segs['label']
 #conver to list
 filtered_list = filtered_seg_inds.tolist()
 
-len(filtered_list)
+len(filtered_segs)
 
 
 # ## Extract Filtered Indices from the OG Labels Image
 
-# In[10]:
+# In[67]:
 
 
 #create bool array where true values are where filtered labels are
@@ -174,85 +181,32 @@ type(filtered_labels)
 # 
 # ### https://gist.github.com/jkatagi/a1207eee32463efd06fb57676dcf86c8?fbclid=IwAR2hi51gLAJ8GluR3hyjUawtu0V7iqLWKITzakr2pvjpTCuQKUUqFyn1ezs
 
-# In[23]:
+# In[68]:
 
 
-def array2raster(newRasterfn, dataset, array, dtype):
-    """
-    save GTiff file from numpy.array
-    input:
-        newRasterfn: save file name
-        dataset : original tif file with spatial information
-        array : numpy.array 
-        dtype: Byte or Float32.
-    """
-    cols = array.shape[1]
-    rows = array.shape[0]
-    print(cols)
-    print(rows)
-    originX, pixelWidth, b, originY, d, pixelHeight = dataset.GetGeoTransform() 
-    print(dataset.GetGeoTransform())
+# Create GeoTiff of NNIR Water Array
+output_image = input_path = data_dir + "tif_folder\\" + "cds_identified.tif"
 
-    driver = gdal.GetDriverByName('GTiff')
-
-    # set data type to save.
-    GDT_dtype = gdal.GDT_Unknown
-    if dtype == "Byte": 
-        GDT_dtype = gdal.GDT_Byte
-    elif dtype == "Float32":
-        GDT_dtype = gdal.GDT_Float32
-    else:
-        print("Not supported data type.")
-
-    # set number of band.
-    if array.ndim == 2:
-        band_num = 1
-    else:
-        band_num = array.shape[2]
-
-    outRaster = driver.Create(newRasterfn, cols, rows, band_num, GDT_dtype)
-    print(newRasterfn)
-    print(cols)
-    print(rows)
-    print(band_num)
-    print(GDT_dtype)
-    outRaster.SetGeoTransform((originX, pixelWidth, 0, originY, 0, pixelHeight))
-
-    # Loop over all bands.
-    for b in range(band_num):
-        outband = outRaster.GetRasterBand(b + 1)
-        # Read in the band's data into the third dimension of our array
-        if band_num == 1:
-            outband.WriteArray(array)
-        else:
-            outband.WriteArray(array[:,:,b])
-
-    # setteing srs from input tif file.
-    prj=dataset.GetProjection()
-    outRasterSRS = osr.SpatialReference(wkt=prj)
-    outRaster.SetProjection(outRasterSRS.ExportToWkt())
-    outband.FlushCache()
-    print(prj)
-
-
-# In[24]:
-
-
-array2raster("tif_folder/out_raster.tif", spatial_image, filtered_labels, "Byte")
+with rio.Env():
+    spatial_profile = spatial_image.profile # get profile of spatial image
+    spatial_profile.update(dtype=rio.uint16, count=1, nodata=None) # update profile. count is number of bands
+    with rio.open(output_image, "w", **spatial_profile) as dst: # create virtual file with nnir_profile
+        dst.write(filtered_labels.astype(rio.uint16), 1) # write data to file with datatype
 
 
 # ## Georefferenced Raster to GeoJson geometry Fefatures
 # 
 # ### https://gis.stackexchange.com/questions/187877/how-to-polygonize-raster-to-shapely-polygons
 
-# In[ ]:
+# In[69]:
 
 
 # mask to only include the pits and not surrounding area
 mask = image == 1
-
+input_crs = spatial_profile['crs']
+    
 with rasterio.Env():
-    with rasterio.open('tif_folder/out_raster.tif', crs = input_crs) as src:
+    with rasterio.open(output_image, crs = input_crs) as src:
         image = src.read(1) # first band
         results = (
         {'properties': {'raster_val': v}, 'geometry': s}
@@ -266,7 +220,7 @@ len(geoms)
 
 # ## Polygonize With Geopandas
 
-# In[ ]:
+# In[70]:
 
 
 gdf  = gpd.GeoDataFrame.from_features(geoms)
@@ -275,9 +229,9 @@ gdf.set_crs(input_crs, inplace = True)
 
 # ## Export to shapefile
 
-# In[ ]:
+# In[72]:
 
 
-outShapefile = 'shapes/full_pa_50_300_05.shp'
+outShapefile = input_path = data_dir + "shapes\\" + "identified_sites.shp"
 gdf.to_file(outShapefile)
 
