@@ -3,19 +3,9 @@
 
 # # Cultural depression identification using whitebox hydrological tools X scikit image segmentation
 # 
+#Credit to the following python libraries and documentation
 # ## Whitebox docs: https://www.whiteboxgeo.com/manual/wbt_book/preface.html
-# ## scikit source: https://www.youtube.com/watch?v=qfUJHY3ku9k&list=PLHae9ggVvqPgyRQQOtENr6hK0m1UquGaG&index=57
-
-# In[58]:
-
-
-area_max = 300
-area_min = 50
-eccentricity_max = 0.6
-
-
-# In[59]:
-
+# ## skimage source: https://scikit-image.org/docs/stable/auto_examples/segmentation/plot_regionprops.html
 
 from whitebox_tools import WhiteboxTools
 import os
@@ -47,26 +37,24 @@ import earthpy as et
 wbt = WhiteboxTools()
 wbt.set_whitebox_dir('C:\\Users\\maxduso.stu\\Anaconda3\\pkgs\\whitebox_tools-2.2.0-py311hc37eb10_2\\Library\\bin')
 
+#SET PARAMS
+area_max = 300
+area_min = 50
+eccentricity_max = 0.6
 
-# In[60]:
-
-
-#set up working dirrectory / data folder
+#SET WORKING DIRRECTORY / DATA FOLDERS
 data_dir = 'C:\\Users\\maxduso.stu\\Desktop\\FCOR_599\\project_work\\data\\'
 os.chdir(data_dir)
 
-#Set path to input image
+#SET INPUT AND OUTPUT PATH
 in_file_name = "full_pa.tif"
 out_file_name = "identified_cds.shp"
 input_path = data_dir + "tif_folder\\" + in_file_name
 output_path = data_dir + "shapes\\" + out_file_name
 
-
-# ## Hydrology "Depth Sink" pit delineation
-# 
-# ### Fills depressions and then uses that surface to sibtract from the original surface so pretty much just gives the depressions in the end. But could be pretty innefficient due to the need to fill depressions and then subtract the two surfaces.
-
-# In[61]:
+#HYDROLOGY DEPTH SINK PIT DELINEATION
+# ### Fills depressions and then uses that surface to sibtract from the original surface 
+# so pretty much just gives the depressions in the end. But could be pretty innefficient due to the need to fill depressions and then subtract the two surfaces.
 
 intermediate_path = data_dir + "tif_folder\\" + "depth_sink_int.tif"
 sink_depth = wbt.depth_in_sink(
@@ -76,35 +64,17 @@ sink_depth = wbt.depth_in_sink(
 )
 
 
-# ## Ensure image type and get spatial attributes
-
-# In[62]:
-
+# ## READ IN SPATIAL IMAGE, EXTRACT ARRAY AND SPATIAL ATTRIBUTES
 
 ## import image with spatial attributes using rasterio
 spatial_image = rio.open(output_path)
+spatial_profile = spatial_image.profile
 
 # read the band of spatial image to a numpy array for processing
 image = spatial_image.read(1)
 
-spatial_profile = spatial_image.profile
 
-#old method of doing shit
-#image = cv2.imread(output_path, -1)
-#spatial_image = gdal.Open(output_path)
-
-#prj = spatial_image.GetProjection()
-#srs = osr.SpatialReference(wkt=prj)
-#input_crs = srs.GetAttrValue('projcs')
-#input_crs
-#print(type(image))
-print(spatial_profile['crs'])
-
-
-# ### Create Threshold and Binarize Image
-
-# In[63]:
-
+# ### CREATE THRESHOLDED BINARY IMAGE
 
 # Make solid black classified image, uint8 is plenty for 3 values
 classified = np.zeros(image.shape, np.uint8)
@@ -113,20 +83,13 @@ classified = np.zeros(image.shape, np.uint8)
 classified[image>0.001] = 127
 
 
-# ## Create the Segments
-
-# In[64]:
-
+# ## CREATE SEGEMENTS
 
 #label segments
 #this creates a numpy array where each pixel is categorized to a cluster or blob
 labels = measure.label(classified, connectivity = image.ndim)
 
-
-# ## Filter labels
-
-# In[65]:
-
+# ## FILTER THE LABELS BASE ON THEIR PROPERTIES
 
 #specify the properties that I want to gather
 #just a dictionary oft he properties that I would like to measure for each label
@@ -141,10 +104,6 @@ props = measure.regionprops_table(labels, image,
 seg_props = pd.DataFrame(props)
 #create an area column expressed in meters
 seg_props['area_m'] = seg_props['area'] / 3.3  #each pixel is about 0.3m x 0.3m so to get meters multiply by this factor
-
-
-# In[66]:
-
 
 #print(seg_props.columns)
 #filter on area parameter
@@ -162,13 +121,9 @@ filtered_seg_inds = filtered_segs['label']
 #conver to list
 filtered_list = filtered_seg_inds.tolist()
 
-len(filtered_segs)
+print("The number of identified labels meeting criteria is:", len(filtered_segs))
 
-
-# ## Extract Filtered Indices from the OG Labels Image
-
-# In[67]:
-
+#EXTRACT FILTERED INDICES FROM THE OG LABELS IMAGE
 
 #create bool array where true values are where filtered labels are
 filtered_labels = np.in1d(labels, filtered_list).reshape(labels.shape)
@@ -177,10 +132,7 @@ print(type(spatial_image))
 type(filtered_labels)
 
 
-# ## Create georeferenced raster again
-
-# In[68]:
-
+# ## CREATE GEOREFFERENCED RASTER ONCE AGAIN
 
 # Create GeoTiff of NNIR Water Array
 output_image = input_path = data_dir + "tif_folder\\" + "cds_identified.tif"
@@ -195,9 +147,6 @@ with rio.Env():
 # ## Georefferenced Raster to GeoJson geometry Fefatures
 # 
 # ### https://gis.stackexchange.com/questions/187877/how-to-polygonize-raster-to-shapely-polygons
-
-# In[69]:
-
 
 # mask to only include the pits and not surrounding area
 mask = image == 1
@@ -216,18 +165,13 @@ geoms = list(results)
 len(geoms)
 
 
-# ## Polygonize With Geopandas
-
-# In[70]:
-
+# ## POLYGONIZE WITH GEOPANDAS
 
 gdf  = gpd.GeoDataFrame.from_features(geoms)
 gdf.set_crs(input_crs, inplace = True)
 
 
-# ## Export to shapefile
-
-# In[72]:
+# ## EXPORT TO SHAPEFILE
 
 gdf.to_file(output_path)
 
