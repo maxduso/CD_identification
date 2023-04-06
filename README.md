@@ -5,20 +5,20 @@ dusomasimiliano@gmail.com
 This script is the result of a project focused on automating the process of identifying pits of a given shape and size in the ground Theses parameters are inputs of teh script, as well as a digital elevation model in which to find the pits.
 
 ## Data Configuration
-As this script is set up, it works with a local folder "data" inside of which are two subfolders "tif_folder" and "shapes". The script expects the input DEM to be held in the fif folder and will output th  final result to the shapes folder. Additionally, there is an intermediary otuput tif called "depth_sink_int.tif" that will be output tot eh tiff folder. This file is not important but may be usefull to visually analyse to give a sense of what features are being filtered for  in the parameterization stage.
+As this script is set up, it works with a local folder "data" inside of which are two subfolders "tif_folder" and "shapes". The script expects the input DEM to be held in the fif folder and will output final result to the shapes folder. Additionally, there is an intermediary output tif called "binary_image.tif" that will be output to the tiff folder. This file is not a main result but may be usefull for visual analysis to give a sense of what features are getting filtered out as a result of the following filtration step.
 
 ## Workflow
 ### Whitebox Tools (Depth Sink)
 Whitebox docs: https://www.whiteboxgeo.com/manual/wbt_book/preface.html
 
-It was found that hydological tools could be used for this purpose as cultural depressions can be though  of as sinks which are somewhat unique to a landscape as they have no outlet for water. This step in the analysis results in a raster output where pixel values represent the depth of that pixel below the top of a given pit. Though this depth information has potential to be usefull given a different methodology, the image was converted to binary where pixels were either 127(pits), or 0(non-pits).
+It was found that hydological toolsets have the functionality to find pits which are defined as low lying pixels grouping which have no outlet for water. This step in the analysis results in a raster output where pixel values represent the depth of that pixel below the top of a given pit (the lowest outlet for water). The image was then converted to binary where pixels were either 127(pits), or 0(non-pits) for ease of segmentation. Worth exploring may be the depth profiles of the pits in future, more advanced studies.
 
 ### Skimage Segementation
 scikit source: https://www.youtube.com/watch?v=qfUJHY3ku9k&list=PLHae9ggVvqPgyRQQOtENr6hK0m1UquGaG&index=57
 
 Skimage contains an image segemntation fucntion within its measure library where it splits an image into "labels". Essentially, instead of all pixells found within pits in the image having the same value (127) they now have values according to which pit they are found within. Skimage uses pixel connectivity rules to do this.
 
-Regionprops_table is then used to filter these labels based on their shape and size whic skimage also allow by caluclating label properties. 
+Skimage's Regionprops_table is then used to filter these labels based on their shape and size which skimage also allow by caluclating label properties. 
 
 `properties = ['label','area','eccentricity','perimeter']`
 
@@ -37,6 +37,6 @@ In order to convert the filtered set of pits from the form of a numpy array to a
 - **out_file_name** -> the desired name of the shapefile output (string)
 
 ## Limitations
-whitebox_X_scikit is flawed in its ability to detect depressions with touching edges. Wthin the study area it was quite common that sites of past shelters be dirrectly adjacent to one another. This causes errosionto take place more  rapidly on the berm at the point where the sites touch due to increase angle of slope on either side of the berm. As a result, the depth sink tool merges the two pits as the middle point is lower that the rest of the perimeters resulting in a figure 8 shape. Becasue the script is not parameterized to detect this shape, nor the size of two merged pits, these pits are missed.
+whitebox_X_scikit is flawed in its ability to detect depressions with touching edges. Wthin the study area it was quite common that sites be dirrectly adjacent to one another. This causes errosionto take place more  rapidly on the berm at the point where the sites touch due to increased angle of slope on either side of the berm. As a result, the depth sink tool merges the two pits becasue the middle point is lower than the rest of the perimeters resulting in a figure 8 shape. Becasue the script is not parameterized to detect this shape, nor the size of two merged pits, these pits are missed.
 
-In order to adress this issue, the imlimentation of skimage watershed tool was explored. This tool fills depressions, or as the tool would define them watersheds, but does not merge two if they should meet at a col feature in the landscape. Though this appeards in theory to be the correct method for the job, it has not proven fruitful yet as it has done a poor job of identification. This approach warrants more exploration which will continue into the future.
+In order to adress this issue, the implimentation of the skimage watershed tool was explored. This tool fills depressions, or as the tool would define them watersheds, but does not merge two if they should meet at a col feature in the landscape. Though this appeards in theory to be the correct method for the job, it has not proven fruitful yet as it has done a poor job of identification. This approach warrants more exploration which will continue into the future.
