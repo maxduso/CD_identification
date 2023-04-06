@@ -4,6 +4,9 @@ dusomasimiliano@gmail.com
 
 This script is the result of a project focused on automating the process of identifying historical remnant of indigenous shelters known as cultural depression. The script takes as an input a digital elevation model, and returns identified sites of cultural depressions as shapefiles.
 
+## Data Configuration
+As this script is set up, it works with a local folder "data" inside of which are two subfolders "tif_folder" and "shapes". The script expects the input DEM to be held in the fif folder and will output th  final result to the shapes folder. Additionally, there is an intermediary otuput tif called "depth_sink_int.tif" that will be output tot eh tiff folder. This file is not important but may be usefull to visually analyse to give a sense of what features are being filtered for  in the parameterization stage.
+
 ## Workflow
 ### Whitebox Tools (Depth Sink)
 Whitebox docs: https://www.whiteboxgeo.com/manual/wbt_book/preface.html
