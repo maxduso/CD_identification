@@ -1,6 +1,9 @@
 # Development of an Automated Method of Pit Identification
 Max Duso
+
 dusomasimiliano@gmail.com
+
+This work is licensed under a Creative Commons Attribution 4.0 International License
 
 This script is the result of a project focused on automating the process of identifying pits of a given shape and size in the ground. Inputs of the script include size and shape parameters of desire to look for, as well as a digital elevation model in which to find the pits.
 

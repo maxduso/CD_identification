@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Cultural depression identification using whitebox hydrological tools X scikit image segmentation
-# 
+# Pit detection script
+
 #Credit to the following python libraries and documentation
 # ## Whitebox docs: https://www.whiteboxgeo.com/manual/wbt_book/preface.html
 # ## skimage source: https://scikit-image.org/docs/stable/auto_examples/segmentation/plot_regionprops.html
@@ -11,7 +11,6 @@ from whitebox_tools import WhiteboxTools
 import os
 import matplotlib.pyplot as plt
 import geopandas as gpd
-from rasterio import plot as rasterplot
 from skimage.segmentation import slic, clear_border
 from skimage.color import label2rgb, rgb2gray
 from skimage import measure, io, img_as_ubyte
@@ -22,22 +21,13 @@ import rasterio.features
 from rasterio.features import shapes
 from rasterio import features
 import pandas as pd
-import skimage.io
-import cv2
-import plotly
-import plotly.express as px
-import plotly.graph_objects as go
 import numpy as np
-from osgeo import osr, gdal, ogr
-import fiona
-from shapely.geometry import Polygon,shape
-import shapely
-import rioxarray as rxr
-import earthpy as et
+from shapely.geometry import shape
 import pprint
+
 #must set the dirrectory to where whitebox tools package was stored on computer for some reason
 wbt = WhiteboxTools()
-wbt.set_whitebox_dir('C:\\Users\\maxduso.stu\\Anaconda3\\pkgs\\whitebox_tools-2.2.0-py311hc37eb10_2\\Library\\bin')
+wbt.set_whitebox_dir("/path/to/whitebox/bin")
 
 #SET PARAMS
 area_max = 150
@@ -45,7 +35,7 @@ area_min = 15
 eccentricity_max = 0.6
 
 #SET WORKING DIRRECTORY / DATA FOLDERS
-data_dir = 'C:\\Users\\maxduso.stu\\Desktop\\FCOR_599\\project_work\\data\\'
+data_dir = "/path/to/data_dirrectory"
 os.chdir(data_dir)
 
 #SET INPUT AND OUTPUT PATH
@@ -54,10 +44,7 @@ out_file_name = "identified_cds.shp"
 input_path = data_dir + "tif_folder\\" + in_file_name
 output_path = data_dir + "shapes\\" + out_file_name
 
-#HYDROLOGY DEPTH SINK PIT DELINEATION
-# ### Fills depressions and then uses that surface to sibtract from the original surface 
-# so pretty much just gives the depressions in the end. But could be pretty innefficient due to the need to fill depressions and then subtract the two surfaces.
-
+#HYDROLOGY DEPTH SINK PIT DELINEATION 
 intermediate_path = data_dir + "tif_folder\\" + "depth_sink_int.tif"
 sink_depth = wbt.depth_in_sink(
                         input_path,
@@ -72,17 +59,16 @@ sink_depth = wbt.depth_in_sink(
 spatial_image = rio.open(intermediate_path)
 spatial_profile = spatial_image.profile
 input_crs = spatial_profile['crs']
+#check spatial profile if you wish
 print("the initial spatial profile is",spatial_profile)
 
 # read the band of spatial image to a numpy array for processing
 image = spatial_image.read(1)
 
-
 # ### CREATE THRESHOLDED BINARY IMAGE
 
 # Make solid black classified image, uint8 is plenty for 3 values
 classified = np.zeros(image.shape, np.uint8)
-
 # Set everything above a low threshold to 127
 classified[image>0.001] = 127
 
@@ -105,10 +91,7 @@ props = measure.regionprops_table(labels, image,
 
 #create a dataframe from these object properties
 seg_props = pd.DataFrame(props)
-#create an area column expressed in meters
-#seg_props['area_m'] = seg_props['area'] / 3.3  #each pixel is about 0.3m x 0.3m so to get meters multiply by this factor
 
-#print(seg_props.columns)
 #filter on area parameter
 #important to note that in this case the pixel size is 1m so I do not do any math, but depends on raster size
 filtered_segs = seg_props[seg_props['area'] > area_min]
@@ -125,6 +108,7 @@ filtered_seg_inds = filtered_segs['label']
 #conver to list
 filtered_list = filtered_seg_inds.tolist()
 
+#check to see how many labels made it though the filter
 print("The number of identified labels meeting criteria is:", len(filtered_segs))
 
 #EXTRACT FILTERED INDICES FROM THE OG LABELS IMAGE
@@ -139,7 +123,6 @@ filtered_labels = filtered_labels.astype(int)
 output_image = input_path = data_dir + "tif_folder\\" + "cds_identified.tif"
 
 with rio.Env():
-    #spatial_profile = spatial_image.profile # get profile of spatial image
     spatial_profile.update(dtype=rio.uint16, count=1, nodata=None) # update profile. count is number of bands
     with rio.open(output_image, "w", **spatial_profile) as dst: # create virtual file with nnir_profile
         dst.write(filtered_labels.astype(rio.uint16), 1) # write data to file with datatype
@@ -172,7 +155,6 @@ gdf = gpd.GeoDataFrame(
     crs="EPSG:3005"
 )
 
-print(gdf['geometry'])
 # ## POLYGONIZE WITH GEOPANDAS
 
 #RUN ONE MORE FILTER TO ENSURE THAT THE PIT SEGMENTS ARE INDEED BEING WRITTEN TO FILE
@@ -182,10 +164,10 @@ gdf = gdf.loc[gdf['raster_val']==1]
 #Make sure that groupings of only a couple of pixels are not returned
 gdf = gdf.loc[gdf['geometry'].area > 4]
 
-#use this to find out what the distribution of the features areas are so we know which
+#optionally use this to find out what the distribution of the features areas are so we know which
 #to eliminate
-fig, ax = plt.subplots(figsize =(10, 7))
-ax.hist(gdf['geometry'].area, bins = [0, 2, 5, 10, 25])
+#fig, ax = plt.subplots(figsize =(10, 7))
+#ax.hist(gdf['geometry'].area, bins = [0, 2, 5, 10, 25])
 
 # ## EXPORT TO SHAPEFILE
 print(len(gdf['geometry']))
