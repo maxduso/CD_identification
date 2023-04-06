@@ -42,3 +42,11 @@ whitebox_X_scikit is flawed in its ability to detect depressions with touching e
 In order to adress this issue, the implimentation of the skimage watershed tool was explored. This tool fills depressions, or as the tool would define them watersheds, but does not merge two if they should meet at a col feature in the landscape. Though this appeards in theory to be the correct method for the job, it has not proven fruitful yet as it has done a poor job of identification upon trial runs. This approach warrants more exploration which will continue into the future.
 
 Additionally though it is convenient that skimage has built in to it segment parameter calculation, the exploration of calculating parameters of shape features later in the analysis is encouraged. Skimage parameterization resulted in some output shapes which are undesireable in shape while others were filtered as expected. Therefore omparisson of methods would be valuable.
+
+## Useful References
+
+Measure region properties—Skimage v0.20.0 docs. (n.d.). Retrieved April 6, 2023, from https://scikit-image.org/docs/stable/auto_examples/segmentation/plot_regionprops.html
+
+Preface—WhiteboxTools User Manual. (n.d.). Retrieved April 6, 2023, from https://www.whiteboxgeo.com/manual/wbt_book/preface.html
+
+Vector Features—Rasterio 1.4dev documentation. (n.d.). Retrieved April 6, 2023, from https://rasterio.readthedocs.io/en/latest/topics/features.html
