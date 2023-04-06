@@ -11,7 +11,6 @@ from whitebox_tools import WhiteboxTools
 import os
 import matplotlib.pyplot as plt
 import geopandas as gpd
-from rasterio import plot as rasterplot
 from skimage.segmentation import slic, clear_border
 from skimage.color import label2rgb, rgb2gray
 from skimage import measure, io, img_as_ubyte
@@ -22,18 +21,8 @@ import rasterio.features
 from rasterio.features import shapes
 from rasterio import features
 import pandas as pd
-import skimage.io
-import cv2
-import plotly
-import plotly.express as px
-import plotly.graph_objects as go
 import numpy as np
-from osgeo import osr, gdal, ogr
-import fiona
-from shapely.geometry import Polygon,shape
-import shapely
-import rioxarray as rxr
-import earthpy as et
+from shapely.geometry import shape
 import pprint
 #must set the dirrectory to where whitebox tools package was stored on computer for some reason
 wbt = WhiteboxTools()
