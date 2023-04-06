@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # Cultural depression identification using whitebox hydrological tools X scikit image segmentation
-# 
+# Pit detection script
+
 #Credit to the following python libraries and documentation
 # ## Whitebox docs: https://www.whiteboxgeo.com/manual/wbt_book/preface.html
 # ## skimage source: https://scikit-image.org/docs/stable/auto_examples/segmentation/plot_regionprops.html
