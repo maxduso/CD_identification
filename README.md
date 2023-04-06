@@ -33,10 +33,12 @@ In order to convert the filtered set of pits from the form of a numpy array to a
 - **area_min** -> the minimum area filter for identified pits.
 - **eccentricity_max** -> the minimum circularity filter for identified pits where eccentricity = 0 is a perfect circle (float 0-1).
 - **data_dir** -> the path to the dirrectoory where dems are stored and also where output will be written (string).
-- **in_file_name** -> the file name of the dem that is desired to scan for cultural depressions (string).
-- **out_file_name** -> the desired name of the shapefile output (string)
+- **in_file_name** -> the file name of the dem that is desired to scan for cultural depressions (string). The file itself should be of .tif format. This script was made to work with DEMs up to 1m in resolution, finer resolution however should also work.
+- **out_file_name** -> the desired name of the shapefile output (string). The file itself is a shapefile found in your shapes dirrectory.
 
 ## Limitations
 whitebox_X_scikit is flawed in its ability to detect depressions with touching edges. Wthin the study area it was quite common that sites be dirrectly adjacent to one another. This causes errosionto take place more  rapidly on the berm at the point where the sites touch due to increased angle of slope on either side of the berm. As a result, the depth sink tool merges the two pits becasue the middle point is lower than the rest of the perimeters resulting in a figure 8 shape. Becasue the script is not parameterized to detect this shape, nor the size of two merged pits, these pits are missed.
 
 In order to adress this issue, the implimentation of the skimage watershed tool was explored. This tool fills depressions, or as the tool would define them watersheds, but does not merge two if they should meet at a col feature in the landscape. Though this appeards in theory to be the correct method for the job, it has not proven fruitful yet as it has done a poor job of identification. This approach warrants more exploration which will continue into the future.
+
+Additionally though it is convenient that skimage has built in to it segment parameter calculation, the exploration of calculating parameters of shape features later in the analysis is encouraged. Skimage parameterization resulted in some output shapes which are undesireable in shape while others were filtered as expected. Therefore omparisson of methods would be valuable.
