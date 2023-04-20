@@ -28,15 +28,14 @@ Skimage's Regionprops_table is then used to filter these labels based on their s
 Each label and its associated parameters then get stored in a row of a dataframe. Rows of the datafame are filtered out based on the parameter values that are defined by the user.
 
 #### Usage within the script
-`labels = measure.label(classified, connectivity = image.ndim)'
+`labels = measure.label(classified, connectivity = image.ndim)`
+
 https://scikit-image.org/docs/stable/api/skimage.measure.html#skimage.measure.label
 
 This line clusters groups of pit pixels using the connectivity rule defined within the funtion (see documentation for help). For each  cluster of grouped pixels, it assigns a label which is essentailly a unique identification value that all the pixels have in common within that cluster. The output is a numpy array where labels are plotted.\
 
-`props = measure.regionprops_table(labels, image,
-                                      properties = ['label',
-                                                   'area',
-                                                   'eccentricity'])`
+`props = measure.regionprops_table(labels, image, properties = ['label','area','eccentricity'])`
+
 https://scikit-image.org/docs/stable/api/skimage.measure.html#skimage.measure.regionprops_table
 
 Within this tool, the properties which are desired to calculate are defined by adding them to the properties list. There is a comprehensive list of properties which skimage has built in outlined in the documentation. The output of this tool is a dictionary which for each label generated above, each property is reported. These properties can be mapped back to the numpy array by their label value.
