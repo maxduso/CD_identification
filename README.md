@@ -30,13 +30,13 @@ Each label and its associated parameters then get stored in a row of a dataframe
 #### Usage within the script
 `labels = measure.label(classified, connectivity = image.ndim)`
 
-https://scikit-image.org/docs/stable/api/skimage.measure.html#skimage.measure.label
+docs: https://scikit-image.org/docs/stable/api/skimage.measure.html#skimage.measure.label
 
 This line clusters groups of pit pixels using the connectivity rule defined within the funtion (see documentation for help). For each  cluster of grouped pixels, it assigns a label which is essentailly a unique identification value that all the pixels have in common within that cluster. The output is a numpy array where labels are plotted.\
 
 `props = measure.regionprops_table(labels, image, properties = ['label','area','eccentricity'])`
 
-https://scikit-image.org/docs/stable/api/skimage.measure.html#skimage.measure.regionprops_table
+docs: https://scikit-image.org/docs/stable/api/skimage.measure.html#skimage.measure.regionprops_table
 
 Within this tool, the properties which are desired to calculate are defined by adding them to the properties list. There is a comprehensive list of properties which skimage has built in outlined in the documentation. The output of this tool is a dictionary which for each label generated above, each property is reported. These properties can be mapped back to the numpy array by their label value.
 
@@ -47,7 +47,33 @@ The dictionary is then converted to a dataframe which is filtered for where the 
 Here, we use indexing from the list of filtered label indices we have just created to get only the values of the original "labels" image which are found in the "filtered_list" list. This is essentially like applying a mask to the image. In fact, maybe it is? 
 
 ### Conversion to Shapefile
-In order to convert the filtered set of pits from the form of a numpy array to a shapfile, the final step is to re-apply the spatial profile of the raster extracted upon the import of the digital elevation raster. Finally rasterio is used to produce shape features from the georeferenced filtered labels. 
+In order to convert the filtered set of pits from the form of a numpy array to a shapfile, the final step is to re-apply the spatial profile of the raster extracted upon the import of the digital elevation raster. Finally rasterio is used to produce shape features from the georeferenced filtered labels.
+
+#### Georefferencing
+```
+with rio.Env():
+    spatial_profile.update(dtype=rio.uint16, count=1, nodata=None) # update profile. count is number of bands
+    with rio.open(output_image, "w", **spatial_profile) as dst: # create virtual file with profile of the original dem
+        dst.write(filtered_labels.astype(rio.uint16), 1) # write data to file with datatype
+```
+
+The above code chunk creates an empty raster in the output file location. It then assigns that raster the spatial profile extracted upon reading in teh dem at the beginning of the script. Finally, it applys the values from the filtered_labels image to the corresponding pixels in the new georeferenced raster, resulting in a georefferenced version of  "filtered_labels".
+
+#### Shapefile extraction
+```
+mask = image == 1
+
+shapes = features.shapes(image, mask = mask, transform=src.transform)
+pprint.pprint(next(shapes))
+
+raster_val = []
+geometry = []
+for shapedict, value in shapes:
+    raster_val.append(value)
+    geometry.append(shape(shapedict))
+```
+
+The above first masks the iamge by pixel value, in this case where `image == 1`, and uses the shapes library to convert these areas to shapes. Each shape has attribute to it a "shapedict" and a "value", which corespond to the geometry and the raster values of that shape. each of these attribute columns are extracted as lists and go on to be combined as a geodataframe.
 
 ## User Defined Variables for Script
 

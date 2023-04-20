@@ -122,12 +122,11 @@ filtered_labels = filtered_labels.astype(int)
 
 # ## CREATE GEOREFFERENCED RASTER ONCE AGAIN
 
-# Create GeoTiff of NNIR Water Array
 output_image = input_path = data_dir + "tif_folder\\" + "cds_identified.tif"
 
 with rio.Env():
     spatial_profile.update(dtype=rio.uint16, count=1, nodata=None) # update profile. count is number of bands
-    with rio.open(output_image, "w", **spatial_profile) as dst: # create virtual file with nnir_profile
+    with rio.open(output_image, "w", **spatial_profile) as dst: # create virtual file with profile of the original dem
         dst.write(filtered_labels.astype(rio.uint16), 1) # write data to file with datatype
 
 
@@ -138,14 +137,15 @@ with rasterio.open(output_image) as src:
     print("the src profile is",src.profile)
     image = src.read(1) # first band
 
-# mask to only include the pits and not surrounding area
+#set the raster values that we want to extract as shapes and therefore mask
 mask = image == 1
 
 #create shape features
 shapes = features.shapes(image, mask = mask, transform=src.transform)
 pprint.pprint(next(shapes))
 
-# read the shapes as separate lists
+# the list of shapes have attributes shapedict and value which correspond to the shapes geometry and raster value alike.
+# here we go and extract that information to new lists to later be combined as a dataframe.
 raster_val = []
 geometry = []
 for shapedict, value in shapes:
