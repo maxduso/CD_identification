@@ -30,6 +30,9 @@ wbt = WhiteboxTools()
 wbt.set_whitebox_dir("/path/to/whitebox/bin")
 
 #SET PARAMS
+#see the following link for additional propeties
+#https://scikit-image.org/docs/stable/api/skimage.measure.html#skimage.measure.regionprops
+
 area_max = 150
 area_min = 15
 eccentricity_max = 0.6
